@@ -1,0 +1,1 @@
+Only supports ESXi 6 at the moment
