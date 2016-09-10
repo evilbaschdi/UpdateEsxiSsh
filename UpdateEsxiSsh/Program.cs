@@ -2,16 +2,30 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Sockets;
 using Renci.SshNet;
 using Renci.SshNet.Common;
 
 namespace UpdateEsxiSsh
 {
-    class Program
+    /// <summary>
+    ///     Program
+    /// </summary>
+    public class Program
     {
         private static string _password;
 
-        static void Main(string[] args)
+        /// <exception cref="IOException">An I/O error occurred. </exception>
+        /// <exception cref="OutOfMemoryException">There is insufficient memory to allocate a buffer for the returned string. </exception>
+        /// <exception cref="SocketException">
+        ///     Socket connection to the SSH server or proxy server could not be established, or an
+        ///     error occurred while resolving the hostname.
+        /// </exception>
+        /// <exception cref="SshConnectionException">SSH session could not be established.</exception>
+        /// <exception cref="SshException">Invalid Operation - An existing channel was used to execute this command.</exception>
+        /// <exception cref="SshAuthenticationException">Authentication of SSH session failed.</exception>
+        /// <exception cref="ProxyException">Failed to establish proxy connection.</exception>
+        public static void Main(string[] args)
         {
             Console.Write("Host: ");
             var host = Console.ReadLine();
@@ -81,11 +95,11 @@ namespace UpdateEsxiSsh
             Console.ReadLine();
         }
 
-        static void HandleKeyEvent(Object sender, AuthenticationPromptEventArgs e)
+        private static void HandleKeyEvent(object sender, AuthenticationPromptEventArgs e)
         {
-            foreach (AuthenticationPrompt prompt in e.Prompts)
+            foreach (var prompt in e.Prompts)
             {
-                if (prompt.Request.IndexOf("Password:", StringComparison.InvariantCultureIgnoreCase) != -1)
+                if (prompt.Request.IndexOf("Password:", StringComparison.CurrentCultureIgnoreCase) != -1)
                 {
                     prompt.Response = _password;
                 }
