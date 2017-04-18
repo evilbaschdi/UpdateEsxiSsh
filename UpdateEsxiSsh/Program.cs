@@ -19,7 +19,7 @@ namespace UpdateEsxiSsh
         /// <exception cref="OutOfMemoryException">There is insufficient memory to allocate a buffer for the returned string. </exception>
         /// <exception cref="SocketException">
         ///     Socket connection to the SSH server or proxy server could not be established, or an
-        ///     error occurred while resolving the hostname.
+        ///     error occurred while resolving the host name.
         /// </exception>
         /// <exception cref="SshConnectionException">SSH session could not be established.</exception>
         /// <exception cref="SshException">Invalid Operation - An existing channel was used to execute this command.</exception>
@@ -27,9 +27,9 @@ namespace UpdateEsxiSsh
         /// <exception cref="ProxyException">Failed to establish proxy connection.</exception>
         public static void Main(string[] args)
         {
-            Console.Write("Host: ");
+            Console.Write("Host / IP: ");
             var host = Console.ReadLine();
-            Console.Write("Username (root): ");
+            Console.Write("User name (root): ");
             var username = Console.ReadLine();
             Console.Write($"Password of '{username}': ");
             _password = null;
