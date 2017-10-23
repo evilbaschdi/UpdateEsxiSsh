@@ -11,6 +11,7 @@ namespace UpdateEsxiSsh
     /// <summary>
     ///     Program
     /// </summary>
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class Program
     {
         private static string _password;
@@ -25,6 +26,7 @@ namespace UpdateEsxiSsh
         /// <exception cref="SshException">Invalid Operation - An existing channel was used to execute this command.</exception>
         /// <exception cref="SshAuthenticationException">Authentication of SSH session failed.</exception>
         /// <exception cref="ProxyException">Failed to establish proxy connection.</exception>
+        // ReSharper disable once UnusedParameter.Global
         public static void Main(string[] args)
         {
             Console.Write("Host / IP: ");
