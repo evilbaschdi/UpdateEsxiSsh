@@ -42,98 +42,109 @@ namespace UpdateEsxiSsh
                 {
                     break;
                 }
+
                 _password += key.KeyChar;
             }
 
             if (!string.IsNullOrWhiteSpace(host) && !string.IsNullOrWhiteSpace(username) && !string.IsNullOrWhiteSpace(_password))
             {
-                Console.WriteLine(new string('*', _password.Length));
-                Console.WriteLine();
-                var kauth = new KeyboardInteractiveAuthenticationMethod(username);
-                var pauth = new PasswordAuthenticationMethod(username, _password);
-
-                kauth.AuthenticationPrompt += HandleKeyEvent;
-
-                var connectionInfo = new ConnectionInfo(host, 22, username, pauth, kauth);
-
-                var sshClient = new SshClient(connectionInfo);
-                sshClient.Connect();
-
-                #region firewall
-
-                var checkFirewall = sshClient.RunCommand("esxcli network firewall ruleset list -r httpClient").Result;
-
-                if (!checkFirewall.Contains("true"))
+                try
                 {
-                    sshClient.RunCommand("esxcli network firewall ruleset set -e true -r httpClient");
-                }
+                    Console.WriteLine(new string('*', _password.Length));
+                    Console.WriteLine();
+                    var kauth = new KeyboardInteractiveAuthenticationMethod(username);
+                    var pauth = new PasswordAuthenticationMethod(username, _password);
 
-                #endregion firewall
+                    kauth.AuthenticationPrompt += HandleKeyEvent;
 
-                #region version
+                    var connectionInfo = new ConnectionInfo(host, 22, username, pauth, kauth);
 
-                var version = sshClient.RunCommand("vmware -v").Result;
-                Console.WriteLine($"{version}{Environment.NewLine}");
+                    var sshClient = new SshClient(connectionInfo);
+                    sshClient.Connect();
 
-                var versionForProfile = "";
+                    #region firewall
 
-                if (version.ToLower().Contains("esxi 6.5"))
-                {
-                    versionForProfile = "esxi-6.5.0-20";
-                }
-                if (version.ToLower().Contains("esxi 6.0"))
-                {
-                    versionForProfile = "esxi-6.0.0-20";
-                }
-                if (string.IsNullOrWhiteSpace(versionForProfile))
-                {
+                    var checkFirewall = sshClient.RunCommand("esxcli network firewall ruleset list -r httpClient").Result;
+
+                    if (!checkFirewall.Contains("true"))
+                    {
+                        sshClient.RunCommand("esxcli network firewall ruleset set -e true -r httpClient");
+                    }
+
+                    #endregion firewall
+
+                    #region version
+
+                    var version = sshClient.RunCommand("vmware -v").Result;
+                    Console.WriteLine($"{version}{Environment.NewLine}");
+
+                    var versionForProfile = "";
+
+                    if (version.ToLower().Contains("esxi 6.5"))
+                    {
+                        versionForProfile = "esxi-6.5.0-20";
+                    }
+
+                    if (version.ToLower().Contains("esxi 6.0"))
+                    {
+                        versionForProfile = "esxi-6.0.0-20";
+                    }
+
+                    if (string.IsNullOrWhiteSpace(versionForProfile))
+                    {
+                        sshClient.Disconnect();
+                        return;
+                    }
+
+                    #endregion version
+
+                    #region fetching profile list
+
+                    Console.WriteLine("Fetching profile list...");
+                    var result =
+                        sshClient.RunCommand(
+                                     "esxcli software sources profile list -d https://hostupdate.vmware.com/software/VUM/PRODUCTION/main/vmw-depot-index.xml | grep -i \"ESXi-6\"")
+                                 .Result;
+                    var stringReader = new StringReader(result);
+                    var list = new List<string>();
+                    while (true)
+                    {
+                        var line = stringReader.ReadLine();
+                        if (line != null)
+                        {
+                            list.Add(line);
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+
+                    #endregion fetching profile list
+
+                    #region update
+
+                    var latest = list.OrderByDescending(s => s).FirstOrDefault(s => s.ToLower().Contains(versionForProfile) && s.Contains("standard"));
+                    if (latest != null)
+                    {
+                        Console.WriteLine(latest);
+                        var profile = latest.Split(' ').FirstOrDefault();
+                        Console.WriteLine($"Updating ESXi to '{profile}'");
+
+                        Console.WriteLine(
+                            sshClient.RunCommand($"esxcli software profile update -d https://hostupdate.vmware.com/software/VUM/PRODUCTION/main/vmw-depot-index.xml -p {profile}")
+                                     .Result);
+                    }
+
+                    #endregion update
+
                     sshClient.Disconnect();
-                    return;
                 }
-
-                #endregion version
-
-                #region fetching profile list
-
-                Console.WriteLine("Fetching profile list...");
-                var result =
-                    sshClient.RunCommand(
-                                 "esxcli software sources profile list -d https://hostupdate.vmware.com/software/VUM/PRODUCTION/main/vmw-depot-index.xml | grep -i \"ESXi-6\"")
-                             .Result;
-                var stringReader = new StringReader(result);
-                var list = new List<string>();
-                while (true)
+                catch (Exception e)
                 {
-                    var line = stringReader.ReadLine();
-                    if (line != null)
-                    {
-                        list.Add(line);
-                    }
-                    else
-                    {
-                        break;
-                    }
+                    Console.WriteLine(e);
+                    //throw;
                 }
-
-                #endregion fetching profile list
-
-                #region update
-
-                var latest = list.OrderByDescending(s => s).FirstOrDefault(s => s.ToLower().Contains(versionForProfile) && s.Contains("standard"));
-                if (latest != null)
-                {
-                    Console.WriteLine(latest);
-                    var profile = latest.Split(' ').FirstOrDefault();
-                    Console.WriteLine($"Updating ESXi to '{profile}'");
-
-                    Console.WriteLine(
-                        sshClient.RunCommand($"esxcli software profile update -d https://hostupdate.vmware.com/software/VUM/PRODUCTION/main/vmw-depot-index.xml -p {profile}")
-                                 .Result);
-                }
-
-                # endregion update
-
-                sshClient.Disconnect();
             }
 
             Console.WriteLine("Done.");
