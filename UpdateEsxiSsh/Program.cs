@@ -76,34 +76,26 @@ namespace UpdateEsxiSsh
                     #region version
 
                     var version = sshClient.RunCommand("vmware -v").Result;
-                    Console.WriteLine($"{version}{Environment.NewLine}");
 
-                    var versionForProfile = "";
 
-                    if (version.ToLower().Contains("esxi 6.5"))
-                    {
-                        versionForProfile = "esxi-6.5.0-20";
-                    }
-
-                    if (version.ToLower().Contains("esxi 6.0"))
-                    {
-                        versionForProfile = "esxi-6.0.0-20";
-                    }
-
-                    if (string.IsNullOrWhiteSpace(versionForProfile))
+                    if (string.IsNullOrWhiteSpace(version))
                     {
                         sshClient.Disconnect();
                         return;
                     }
 
+                    Console.WriteLine($"{version}{Environment.NewLine}");
+
                     #endregion version
 
                     #region fetching profile list
 
+                    var major = "esxi 6.7".Split(' ')[1].Split('.')[0];
+
                     Console.WriteLine("Fetching profile list...");
                     var result =
                         sshClient.RunCommand(
-                                     "esxcli software sources profile list -d https://hostupdate.vmware.com/software/VUM/PRODUCTION/main/vmw-depot-index.xml | grep -i \"ESXi-6\"")
+                                     $"esxcli software sources profile list -d https://hostupdate.vmware.com/software/VUM/PRODUCTION/main/vmw-depot-index.xml | grep -i \"ESXi-{major}\"")
                                  .Result;
                     var stringReader = new StringReader(result);
                     var list = new List<string>();
@@ -124,7 +116,7 @@ namespace UpdateEsxiSsh
 
                     #region update
 
-                    var latest = list.OrderByDescending(s => s).FirstOrDefault(s => s.ToLower().Contains(versionForProfile) && s.Contains("standard"));
+                    var latest = list.OrderByDescending(s => s).FirstOrDefault(s => s.Contains("standard"));
                     if (latest != null)
                     {
                         Console.WriteLine(latest);
