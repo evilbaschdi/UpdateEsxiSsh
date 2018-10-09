@@ -116,16 +116,28 @@ namespace UpdateEsxiSsh
 
                     #region update
 
-                    var latest = list.OrderByDescending(s => s).FirstOrDefault(s => s.Contains("standard"));
+                    var latest = list.AsParallel().Where(s => s.Contains("standard") && s.Split(' ')[0].Contains("20")).AsParallel().OrderByDescending(s => s).FirstOrDefault();
+
                     if (latest != null)
                     {
-                        Console.WriteLine(latest);
                         var profile = latest.Split(' ').FirstOrDefault();
-                        Console.WriteLine($"Updating ESXi to '{profile}'");
+                        var left = version.Replace("VMware ESXi ", "").Replace(" build", "");
+                        var right = profile?.Replace("-standard", "").Replace("ESXi-", "");
+                        var compare = left.Trim().Equals(right?.Trim());
 
-                        Console.WriteLine(
-                            sshClient.RunCommand($"esxcli software profile update -d https://hostupdate.vmware.com/software/VUM/PRODUCTION/main/vmw-depot-index.xml -p {profile}")
-                                     .Result);
+                        if (compare)
+                        {
+                            Console.WriteLine("ESXi is up to date.");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Updating ESXi to '{profile}'");
+
+                            Console.WriteLine(
+                                sshClient
+                                    .RunCommand($"esxcli software profile update -d https://hostupdate.vmware.com/software/VUM/PRODUCTION/main/vmw-depot-index.xml -p {profile}")
+                                    .Result);
+                        }
                     }
 
                     #endregion update

@@ -3,6 +3,7 @@
     <Description>Console application for patching esxi without typing the commands</Description>
     <AssemblyTitle>UpdateEsxiSsh</AssemblyTitle>
     <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TieredCompilation>true</TieredCompilation>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>UpdateEsxiSsh</AssemblyName>
     <OutputType>Exe</OutputType>
