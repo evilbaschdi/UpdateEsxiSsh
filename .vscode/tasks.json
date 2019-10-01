@@ -1,15 +1,13 @@
 {
-    "version": "0.1.0",
-    "command": "dotnet",
-    "isShellCommand": true,
-    "args": [],
+    "version": "2.0.0",
     "tasks": [
         {
-            "taskName": "build",
+            "label": "build",
+            "command": "dotnet",
+            "type": "process",
             "args": [
                 "${workspaceRoot}/UpdateEsxiSsh/UpdateEsxiSsh.csproj"
-            ],
-            "isBuildCommand": true,
+            ],            
             "problemMatcher": "$msCompile"
         }
     ]
