@@ -59,7 +59,7 @@ namespace UpdateEsxiSsh
 
                     var connectionInfo = new ConnectionInfo(host, 22, username, pauth, kauth);
 
-                    var sshClient = new SshClient(connectionInfo);
+                    using var sshClient = new SshClient(connectionInfo);
                     sshClient.Connect();
 
                     #region firewall
